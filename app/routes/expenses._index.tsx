@@ -14,21 +14,26 @@ export async function loader({ request }: LoaderFunctionArgs) {
   let query =
     "SELECT e.*, u.name as submitter_name FROM expenses e JOIN users u ON e.user_id = u.id";
   const conditions: string[] = [];
+  const params: any[] = [];
 
   if (user.role === "employee") {
-    conditions.push(`e.user_id = ${user.id}`);
+    conditions.push("e.user_id = ?");
+    params.push(user.id);
   }
 
   if (search) {
-    conditions.push(`(e.title LIKE '%${search}%' OR e.description LIKE '%${search}%')`);
+    conditions.push("(e.title LIKE ? OR e.description LIKE ?)");
+    params.push(`%${search}%`, `%${search}%`);
   }
 
   if (category) {
-    conditions.push(`e.category = '${category}'`);
+    conditions.push("e.category = ?");
+    params.push(category);
   }
 
   if (status) {
-    conditions.push(`e.status = '${status}'`);
+    conditions.push("e.status = ?");
+    params.push(status);
   }
 
   if (conditions.length > 0) {
@@ -37,7 +42,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   query += " ORDER BY e.created_at DESC";
 
-  const expenses = db.prepare(query).all() as any[];
+  const expenses = db.prepare(query).all(...params) as any[];
 
   return json({ expenses, user, search, category, status });
 }
