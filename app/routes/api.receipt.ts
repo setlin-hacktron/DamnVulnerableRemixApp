@@ -13,7 +13,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw new Response("File parameter required", { status: 400 });
   }
 
-  const filePath = path.join(process.cwd(), "data", "receipts", file);
+  const baseDir = path.resolve(process.cwd(), "data", "receipts");
+  const filePath = path.resolve(baseDir, file);
+
+  if (!filePath.startsWith(baseDir + path.sep)) {
+    throw new Response("Forbidden", { status: 403 });
+  }
 
   if (!fs.existsSync(filePath)) {
     throw new Response("Receipt not found", { status: 404 });
