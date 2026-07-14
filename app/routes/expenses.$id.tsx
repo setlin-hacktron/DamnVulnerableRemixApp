@@ -1,6 +1,7 @@
 import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link, Form, useActionData } from "@remix-run/react";
+import DOMPurify from "isomorphic-dompurify";
 import { requireUser } from "~/auth.server";
 import db from "~/db.server";
 
@@ -103,7 +104,7 @@ export default function ExpenseDetail() {
             </label>
             <div
               className="mt-2 text-sm text-gray-700 prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: expense.description || "<em>No description</em>" }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(expense.description || "<em>No description</em>") }}
             />
           </div>
 
