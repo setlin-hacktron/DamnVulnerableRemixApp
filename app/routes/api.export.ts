@@ -2,6 +2,17 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/auth.server";
 import db from "~/db.server";
 
+function escapeCSVField(val: any): string {
+  if (val === null || val === undefined) {
+    return "";
+  }
+  let str = String(val);
+  if (/^[=\+\-@]/.test(str)) {
+    str = "'" + str;
+  }
+  return str.replace(/"/g, '""');
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireUser(request);
 
@@ -16,9 +27,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   let csv = "ID,Title,Description,Amount,Category,Status,Submitter,Email,Date\n";
   for (const exp of expenses) {
-    const desc = (exp.description || "").replace(/"/g, '""');
-    const title = exp.title.replace(/"/g, '""');
-    csv += `${exp.id},"${title}","${desc}",${exp.amount},${exp.category},${exp.status},"${exp.submitter_name}","${exp.submitter_email}",${exp.created_at}\n`;
+    const title = escapeCSVField(exp.title);
+    const desc = escapeCSVField(exp.description);
+    const category = escapeCSVField(exp.category);
+    const status = escapeCSVField(exp.status);
+    const submitter = escapeCSVField(exp.submitter_name);
+    const email = escapeCSVField(exp.submitter_email);
+    csv += `${exp.id},"${title}","${desc}",${exp.amount},"${category}","${status}","${submitter}","${email}","${exp.created_at}"\n`;
   }
 
   return new Response(csv, {
