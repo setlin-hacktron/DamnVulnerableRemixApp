@@ -3,6 +3,7 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { Form, useActionData, Link } from "@remix-run/react";
 import { requireUser } from "~/auth.server";
 import db from "~/db.server";
+import { validateUrl } from "~/ssrf.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   const user = await requireUser(request);
@@ -25,6 +26,11 @@ export async function action({ request }: ActionFunctionArgs) {
   let receiptPath = null;
   if (receiptUrl) {
     try {
+      const isValid = await validateUrl(receiptUrl);
+      if (!isValid) {
+        return json({ error: "Invalid or untrusted receipt URL" }, { status: 400 });
+      }
+
       const response = await fetch(receiptUrl);
       if (!response.ok) throw new Error("Failed to fetch receipt");
       const buffer = Buffer.from(await response.arrayBuffer());

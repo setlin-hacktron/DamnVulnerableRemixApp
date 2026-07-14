@@ -1,6 +1,7 @@
 import { json } from "@remix-run/node";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/auth.server";
+import { validateUrl } from "~/ssrf.server";
 import path from "path";
 import fs from "fs";
 
@@ -11,6 +12,11 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (!receiptUrl) {
     return json({ error: "URL is required" }, { status: 400 });
+  }
+
+  const isValid = await validateUrl(receiptUrl);
+  if (!isValid) {
+    return json({ error: "Invalid or untrusted receipt URL" }, { status: 400 });
   }
 
   try {
