@@ -101,10 +101,13 @@ export default function ExpenseDetail() {
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">
               Description
             </label>
-            <div
-              className="mt-2 text-sm text-gray-700 prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: expense.description || "<em>No description</em>" }}
-            />
+            <div className="mt-2 text-sm text-gray-700 prose max-w-none whitespace-pre-wrap">
+              {expense.description ? (
+                expense.description
+              ) : (
+                <em>No description</em>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
