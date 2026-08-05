@@ -5,7 +5,7 @@ import { requireUser } from "~/auth.server";
 import db from "~/db.server";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-  await requireUser(request);
+  const user = await requireUser(request);
 
   const expense = db
     .prepare(
@@ -16,6 +16,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   if (!expense) {
     throw new Response("Expense not found", { status: 404 });
+  }
+
+  if (user.role === "employee" && expense.user_id !== user.id) {
+    throw new Response("Forbidden", { status: 403 });
   }
 
   const reimbursement = db
@@ -31,6 +35,18 @@ export async function action({ params, request }: ActionFunctionArgs) {
   const intent = formData.get("intent") as string;
 
   if (intent === "delete") {
+    const expense = db
+      .prepare("SELECT user_id FROM expenses WHERE id = ?")
+      .get(params.id) as any;
+
+    if (!expense) {
+      throw new Response("Expense not found", { status: 404 });
+    }
+
+    if (user.role === "employee" && expense.user_id !== user.id) {
+      throw new Response("Forbidden", { status: 403 });
+    }
+
     db.prepare("DELETE FROM reimbursements WHERE expense_id = ?").run(params.id);
     db.prepare("DELETE FROM expenses WHERE id = ?").run(params.id);
     return json({ success: true, message: "Expense deleted" });
