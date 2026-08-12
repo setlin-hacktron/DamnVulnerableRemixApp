@@ -17,8 +17,10 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const updates: Record<string, any> = {};
 
-  for (const [key, value] of formData.entries()) {
-    if (key !== "intent" && value) {
+  const allowedFields = ["name", "email", "department"];
+  for (const key of allowedFields) {
+    const value = formData.get(key);
+    if (value) {
       updates[key] = value;
     }
   }
