@@ -12,16 +12,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Build a filtered search over the current user's expenses.
   let sql = `SELECT id, title, description, amount, category, status
              FROM expenses
-             WHERE user_id = ${user.id}
-               AND title LIKE '%${query}%'`;
+             WHERE user_id = ?
+               AND title LIKE ?`;
+  const params: unknown[] = [user.id, `%${query}%`];
 
   if (category) {
-    sql += ` AND category = '${category}'`;
+    sql += " AND category = ?";
+    params.push(category);
   }
 
   sql += " ORDER BY created_at DESC";
 
-  const results = db.prepare(sql).all();
+  const results = db.prepare(sql).all(...params);
 
   return json({ results });
 }
